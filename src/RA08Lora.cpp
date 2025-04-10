@@ -15,15 +15,18 @@ void RA08Lora::setOTAA(String devEUI, String appEUI, String appKey, String regio
   _appKey = appKey;
   _region = region;
 
-  sendCommand("AT+MODE=LWOTAA");
-  sendCommand("AT+ID=DevEui,\"" + _devEUI + "\"");
-  sendCommand("AT+ID=AppEui,\"" + _appEUI + "\"");
-  sendCommand("AT+KEY=APPKEY,\"" + _appKey + "\"");
+  sendCommand("AT+CJOINMODE=0", 2000);
+  sendCommand("AT+CRXP=1,1,869525000", 2000);
+  sendCommand("AT+CFREQBANDMASK=0001", 2000);
+  sendCommand("AT+CULDLMODE=2", 2000);
+  sendCommand("AT+ID=DevEui,\"" + _devEUI + "\"", 2000);
+  sendCommand("AT+ID=AppEui,\"" + _appEUI + "\"", 2000);
+  sendCommand("AT+KEY=APPKEY,\"" + _appKey + "\"", 2000);
   sendCommand("AT+DR=" + _region);
 }
 
 void RA08Lora::join() {
-  sendCommand("AT+JOIN", 3000);
+  sendCommand("AT+CJOIN=1,1,8,3", 3000);
 }
 
 bool RA08Lora::isJoined() {
@@ -33,11 +36,11 @@ bool RA08Lora::isJoined() {
 }
 
 void RA08Lora::sendHex(String hexData) {
-  sendCommand("AT+MSGHEX=\"" + hexData + "\"", 2000);
+  sendCommand("AT+DTRX=1,1,4,\"" + hexData + "\"", 5000);
 }
 
 void RA08Lora::enableClassC() {
-  sendCommand("AT+CLASS=C");
+  sendCommand("AT+CCLASS=2", 2000);
 }
 
 void RA08Lora::onMessage(void (*callback)(String msg)) {
@@ -48,7 +51,7 @@ void RA08Lora::listen() {
   if (loraSerial.available()) {
     String msg = loraSerial.readStringUntil('\n');
     msg.trim();
-    if (msg.startsWith("RX")) {
+    if (msg.startsWith("OK+RECV:")) {
       int idx = msg.indexOf("\"");
       int endIdx = msg.lastIndexOf("\"");
       if (idx != -1 && endIdx != -1 && endIdx > idx) {
